@@ -19,11 +19,12 @@ def _detect_by_gazepoint_filter(df, th_fxdur=None, th_scdur=None, th_bkdur=None)
         """
         Take eye tracking data from outer function and perform detection.
         Only consider valid POG to calculate fixations.
-        The fixations that fall outside of the screen area is eliminated.
+        The fixations that fall outside of the screen area or a given threshold
+        (if available) are eliminated.
 
         Returns
         -------
-        fixations : array-like of shape (n_fixations)
+        fixations : array-like of shape (n_fixations, 4)
             Each element in the array is a fixation described in the format
             [fxh, fxv, fxdur, fxtime], where:
             - fxh : position of fixation on horizontal axis.
@@ -54,10 +55,11 @@ def _detect_by_gazepoint_filter(df, th_fxdur=None, th_scdur=None, th_bkdur=None)
     def _detect_saccades():
         """
         Calculate saccades based on a list of fixations.
+        Saccades that fall outside of a given threshold (if available) are eliminated.
 
         Returns
         -------
-        saccades : array-like of shape (n_saccades)
+        saccades : array-like of shape (n_saccades, 6)
             Each element in the array is a saccade described in the format
             [scsh, scsv, sceh, scev, scdur, sctime], where:
             - scsh : position of starting POG on horizontal axis.

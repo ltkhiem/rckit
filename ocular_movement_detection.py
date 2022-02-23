@@ -1,8 +1,9 @@
 import pandas as pd
 import numpy as np
 from settings import _TH_FIXA_DUR
+from utils.checker import inside_th
 
-def _detect_by_gazepoint_filter(df, th_fxdur=None, th_scdur=None):
+def _detect_by_gazepoint_filter(df, th_fxdur=None, th_scdur=None, th_bkdur=None):
     """ 
     Detect fixations, saccades and blinks using the annotation provided 
     by Gazepoint's internal filter.
@@ -78,13 +79,38 @@ def _detect_by_gazepoint_filter(df, th_fxdur=None, th_scdur=None):
                 fxend[:-1]               # saccades start will be end of last fixation
             ], axis=1)
         return saccades
+        ### Remove prints, add threshold ... 
 
+    def _detect_blink():
+        """
+        Take eye tracking data from outer function and perform detection.
+        Blinks that fall outside of a given threshold (if available) are eliminated.
+
+        Returns
+        -------
+        blinks : array-like of shape (n_fixations, 2)
+            Each element in the array is a blink described in the format
+            [bkdur, bktime], where:
+            - bkdur : duration in seconds of blink.
+            - bktime : starting time in seconds since the start of the session. 
+        """
+        blinks = []
+        bk_groups = df[df['BKID'] != 0].groupby(by=['BKID'])
+        for bkid, bk in bk_groups:
+            bktime = bk['TIME'].values[0] - session_start_time
+            bkdur = df.iloc[bk.tail(1).index[0]+1]['BKDUR']
+            if th_bkdur is not None and not inside_th(th_bkdur, bkdur):
+                continue
+            blinks.append([bkdur, bktime])
+        blinks = np.array(blinks)
+        return blinks
+
+        
+    session_start_time = df.iloc[0]['TIME']
     fixations = _detect_fixations()
     saccades = _detect_saccades()
-    print(fixations[0:4])
-    print(saccades[0:4])
-    print(fixations.shape, saccades.shape)
-    return fixations, saccades
+    blinks = _detect_blink()
+    return fixations, saccades, blinks
 
 
 def detect(df, method='gazepoint'):

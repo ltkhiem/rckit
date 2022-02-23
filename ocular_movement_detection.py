@@ -15,12 +15,26 @@ def _detect_by_gazepoint_filter(df, th_fxdur=None, th_scdur=None):
 
     """
     def _detect_fixations():
-        fixa_groups = df.groupby(by=['FPOGID'])
+        """
+        Take eye tracking data from outer function and perform detection.
+        Only consider valid POG to calculate fixations.
+        The fixations that fall outside of the screen area is eliminated.
+
+        Returns
+        -------
+        fixations : array-like of shape (n_fixations)
+            Each element in the array is a fixation described in the format
+            [fxh, fxv, fxdur, fxtime], where:
+            - fxh : position of fixation on horizontal axis.
+            - fxv : position of fixation on vertical axis.
+            - fxdur : duration in seconds of fixation.
+            - fxtime : starting time in seconds since the start of the session. 
+        """
+        fx_groups = df.groupby(by=['FPOGID'])
         # Should we ignore the first fixation (as it could be the remaining 
         # of the last fixation in the previous session)?
         fixations = []
-        session_time = df['TIME'].values[0]
-        for fpogid, fpogs in fixa_groups:
+        for fpogid, fpogs in fx_groups:
             fpogs_valid = fpogs[fpogs['FPOGV'] == 1]
             fxh = fpogs_valid['FPOGX'].mean()
             fxv = fpogs_valid['FPOGY'].mean()
@@ -37,6 +51,21 @@ def _detect_by_gazepoint_filter(df, th_fxdur=None, th_scdur=None):
         return np.array(fixations)
 
     def _detect_saccades():
+        """
+        Calculate saccades based on a list of fixations.
+
+        Returns
+        -------
+        saccades : array-like of shape (n_saccades)
+            Each element in the array is a saccade described in the format
+            [scsh, scsv, sceh, scev, scdur, sctime], where:
+            - scsh : position of starting POG on horizontal axis.
+            - scsv : position of starting POG on vertical axis.
+            - sceh : position of ending POG on horizontal axis.
+            - scev : position of ending POG on vertical axis.
+            - scdur : duration in seconds of saccade.
+            - sctime : starting time in seconds since the start of the session. 
+        """
         print(fixations[0:4])
         fxend = (fixations[:, 2] + fixations[:, 3]).reshape(-1,1)
         print(fxend[:4])

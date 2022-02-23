@@ -38,15 +38,18 @@ def _detect_by_gazepoint_filter(df, th_fxdur=None, th_scdur=None, th_bkdur=None)
         fixations = []
         for fpogid, fpogs in fx_groups:
             fpogs_valid = fpogs[fpogs['FPOGV'] == 1]
+            if len(fpogs_valid) == 0: 
+                continue
+
             fxh = fpogs_valid['FPOGX'].mean()
             fxv = fpogs_valid['FPOGY'].mean()
             fxdur = fpogs_valid['FPOGD'].values[-1]
-            fxtime = fpogs_valid['TIME'].values[0] - session_time
+            fxtime = fpogs_valid['TIME'].values[0] - session_start_time
 
+            # Checks
             if th_fxdur is not None and fxdur * 1000 <= th_fxdur: 
                 # Fixation duration requirement not meet.
                 continue
-
             if 0 <= fxh <= 1 and 0 <= fxv <= 1:
                 # Only take fixation that is inside the screen.
                 fixations.append([fxh, fxv, fxdur, fxtime])
@@ -69,21 +72,18 @@ def _detect_by_gazepoint_filter(df, th_fxdur=None, th_scdur=None, th_bkdur=None)
             - scdur : duration in seconds of saccade.
             - sctime : starting time in seconds since the start of the session. 
         """
-        print(fixations[0:4])
         fxend = (fixations[:, 2] + fixations[:, 3]).reshape(-1,1)
-        print(fxend[:4])
         time_diff = (fixations[1:][:, 3] - fxend[:-1, 0]).reshape(-1,1)
-        print(time_diff[:4])
         saccades = np.concatenate([
                 fixations[:-1][:, :2],  # start_x, start_y
                 fixations[1:][:, :2],   # end_x, end_y
                 time_diff,              # saccades duration
-                fxend[:-1]               # saccades start will be end of last fixation
+                fxend[:-1]              # saccades start will be end of last fixation
             ], axis=1)
         return saccades
         ### Remove prints, add threshold ... 
 
-    def _detect_blink():
+    def _detect_blinks():
         """
         Take eye tracking data from outer function and perform detection.
         Blinks that fall outside of a given threshold (if available) are eliminated.
@@ -100,9 +100,22 @@ def _detect_by_gazepoint_filter(df, th_fxdur=None, th_scdur=None, th_bkdur=None)
         bk_groups = df[df['BKID'] != 0].groupby(by=['BKID'])
         for bkid, bk in bk_groups:
             bktime = bk['TIME'].values[0] - session_start_time
-            bkdur = df.iloc[bk.tail(1).index[0]+1]['BKDUR']
+            # Blink duration is calculated after the blink is over. Hence, the duration
+            # is available in the next data entry ...
+            next_id = bk.tail(1).index[0]+1
+            if next_id >= len(df):
+                # Out of bound
+                continue
+ 
+            bkdur = df.iloc[next_id]['BKDUR']
+
+            # Checks
+            if bkdur == 0:
+                # Session is over before blink is over ... eliminate this
+                continue
             if th_bkdur is not None and not inside_th(th_bkdur, bkdur):
                 continue
+
             blinks.append([bkdur, bktime])
         blinks = np.array(blinks)
         return blinks
@@ -111,7 +124,7 @@ def _detect_by_gazepoint_filter(df, th_fxdur=None, th_scdur=None, th_bkdur=None)
     session_start_time = df.iloc[0]['TIME']
     fixations = _detect_fixations()
     saccades = _detect_saccades()
-    blinks = _detect_blink()
+    blinks = _detect_blinks()
     return fixations, saccades, blinks
 
 

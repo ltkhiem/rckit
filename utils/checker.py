@@ -4,7 +4,7 @@ def inside_th(thresh, value):
 
     Parameters
     ----------
-    thresh : tuple, or list of size 2
+    thresh : tuple, or list of shape (2,)
         The thrsesholds. The first item specifies the lower limit
         while the second item specifies the upper limit. If either
         is None, the corresponding threshold is ignored.

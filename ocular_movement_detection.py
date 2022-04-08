@@ -1,15 +1,35 @@
 import pandas as pd
 import numpy as np
-from settings import _TH_FIXA_DUR
 from utils.checker import inside_th
 
-def _detect_by_gazepoint_filter(df, th_fxdur=None, th_scdur=None, th_bkdur=None):
+def _detect_by_gazepoint_filter(
+        df, 
+        screen_size, 
+        th_fxdur=None,
+        th_scdur=None,
+        th_bkdur=None
+):
     """ 
     Detect fixations, saccades and blinks using the annotation provided 
     by Gazepoint's internal filter.
 
     Parameters
     ----------
+    df : dataframe
+        Dataframe of the eye tracking data
+
+    screen_size: tuple or list of shape (2,)
+        The monitor size used to collect eye tracking data. The first element 
+        is the width and the second element is the height.
+    
+    th_fxdur: tuple or list of shape (2,) 
+        Fixation duration threshold
+
+    th_scdur: tuple or list of shape (2,)
+        Saccade duration threshold
+
+    th_bkdur: tuple or list of shape (2,)
+        Blink duration threshold
 
     Returns
     -------
@@ -57,6 +77,7 @@ def _detect_by_gazepoint_filter(df, th_fxdur=None, th_scdur=None, th_bkdur=None)
 
     def _detect_saccades():
         """
+        
         Calculate saccades based on a list of fixations.
         Saccades that fall outside of a given threshold (if available) are eliminated.
 
@@ -80,13 +101,15 @@ def _detect_by_gazepoint_filter(df, th_fxdur=None, th_scdur=None, th_bkdur=None)
                 time_diff,              # saccades duration
                 fxend[:-1]              # saccades start will be end of last fixation
             ], axis=1)
+         
         return saccades
         ### Remove prints, add threshold ... 
 
     def _detect_blinks():
         """
         Take eye tracking data from outer function and perform detection.
-        Blinks that fall outside of a given threshold (if available) are eliminated.
+        Blinks that fall outside of a given threshold (if available) will
+        be eliminated.
 
         Returns
         -------
@@ -100,8 +123,8 @@ def _detect_by_gazepoint_filter(df, th_fxdur=None, th_scdur=None, th_bkdur=None)
         bk_groups = df[df['BKID'] != 0].groupby(by=['BKID'])
         for bkid, bk in bk_groups:
             bktime = bk['TIME'].values[0] - session_start_time
-            # Blink duration is calculated after the blink is over. Hence, the duration
-            # is available in the next data entry ...
+            # Blink duration is calculated after the blink is over. Hence, 
+            # the duration is available in the next data entry ...
             next_id = bk.tail(1).index[0]+1
             if next_id >= len(df):
                 # Out of bound
@@ -145,6 +168,5 @@ def detect(df, method='gazepoint'):
 
     
 if __name__ == "__main__":
-    print(_TH_FIXA_DUR)
     df_data = pd.read_csv('/mnt/DATA/ltkhiem/rcir/dataset/0000/fixed_et/tracker_data_log_0.tsv', delimiter = '\t')
     detect(df_data) 

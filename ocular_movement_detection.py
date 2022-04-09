@@ -4,7 +4,7 @@ from utils.checker import inside_th
 
 def _detect_by_gazepoint_filter(
         df, 
-        screen_size, 
+        scrsz, 
         th_fxdur=None,
         th_scdur=None,
         th_bkdur=None
@@ -18,7 +18,7 @@ def _detect_by_gazepoint_filter(
     df : dataframe
         Dataframe of the eye tracking data
 
-    screen_size: tuple or list of shape (2,)
+    scrsz: tuple or list of shape (2,)
         The monitor size used to collect eye tracking data. The first element 
         is the width and the second element is the height.
     
@@ -72,14 +72,14 @@ def _detect_by_gazepoint_filter(
                 continue
             if 0 <= fxh <= 1 and 0 <= fxv <= 1:
                 # Only take fixation that is inside the screen.
-                fixations.append([fxh, fxv, fxdur, fxtime])
+                fixations.append(np.array([fxh, fxv, fxdur, fxtime]))
         return np.array(fixations)
 
     def _detect_saccades():
         """
-        
-        Calculate saccades based on a list of fixations.
-        Saccades that fall outside of a given threshold (if available) are eliminated.
+        Calculate saccades based on a given list of fixations.
+        Saccades that fall outside of a given threshold (if available) 
+        will be eliminated.
 
         Returns
         -------
@@ -151,7 +151,7 @@ def _detect_by_gazepoint_filter(
     return fixations, saccades, blinks
 
 
-def detect(df, method='gazepoint'):
+def detect(df, screen_size, method='gazepoint'):
     """ Detect fixations, saccades and blinks from eye-tracking data
     
     Parameters

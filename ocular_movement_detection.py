@@ -94,16 +94,22 @@ def _detect_by_gazepoint_filter(
             - sctime : starting time in seconds since the start of the session. 
         """
         fxend = (fixations[:, 2] + fixations[:, 3]).reshape(-1,1)
-        time_diff = (fixations[1:][:, 3] - fxend[:-1, 0]).reshape(-1,1)
+        time_diff = (fixations[1:, 3] - fxend[:-1, 0]).reshape(-1,1)
+        sxy = fixations[:-1, :2]    
+        exy = fixations[1:, :2] 
+        sxmag = np.linalg.norm(exy*scrsz - sxy*scrsz, axis=1).reshape(-1,1)
+        rad_angles = -np.arctan2(*(exy*scrsz - sxy*scrsz).T[::-1])
+        sxdir = ((rad_angles * 180/np.pi + 360) % 360).reshape(-1,1)
         saccades = np.concatenate([
-                fixations[:-1][:, :2],  # start_x, start_y
-                fixations[1:][:, :2],   # end_x, end_y
-                time_diff,              # saccades duration
-                fxend[:-1]              # saccades start will be end of last fixation
+                sxy, 
+                exy,
+                time_diff,
+                fxend[:-1],
+                sxmag,
+                sxdir,
             ], axis=1)
          
         return saccades
-        ### Remove prints, add threshold ... 
 
     def _detect_blinks():
         """
@@ -162,11 +168,18 @@ def detect(df, screen_size, method='gazepoint'):
     
     """
     if method=='gazepoint':
-        ocular_events = _detect_by_gazepoint_filter(df)
+        ocular_events = _detect_by_gazepoint_filter(df, screen_size)
     return ocular_events
 
 
     
 if __name__ == "__main__":
-    df_data = pd.read_csv('/mnt/DATA/ltkhiem/rcir/dataset/0000/fixed_et/tracker_data_log_0.tsv', delimiter = '\t')
-    detect(df_data) 
+    # df_data = pd.read_csv('/mnt/DATA/ltkhiem/rcir/dataset/0000/fixed_et/tracker_data_log_0.tsv', delimiter = '\t')
+    df_data = pd.read_csv('temp/aaaa.csv')
+    np.set_printoptions(suppress=True)
+    f, s, b = detect(df_data, [1920, 1080]) 
+    print("fixations")
+    print(f)
+    print("saccades")
+    print(s)
+    

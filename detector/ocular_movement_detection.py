@@ -131,7 +131,7 @@ def _detect_by_gazepoint_filter(
             bktime = bk['TIME'].values[0] - session_start_time
             # Blink duration is calculated after the blink is over. Hence, 
             # the duration is available in the next data entry ...
-            next_id = bk.tail(1).index[0]+1
+            next_id = bk.tail(1).index[0]+1 - session_start_id
             if next_id >= len(df):
                 # Out of bound
                 continue
@@ -151,9 +151,11 @@ def _detect_by_gazepoint_filter(
 
         
     session_start_time = df.iloc[0]['TIME']
+    session_start_id = df.index[0]
     fixations = _detect_fixations()
-    saccades = _detect_saccades()
-    blinks = _detect_blinks()
+    cond = len(fixations) > 0
+    saccades = _detect_saccades() if cond else np.array([])
+    blinks = _detect_blinks() if cond else np.array([])
     return fixations, saccades, blinks
 
 

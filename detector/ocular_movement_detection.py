@@ -85,13 +85,15 @@ def _detect_by_gazepoint_filter(
         -------
         saccades : array-like of shape (n_saccades, 6)
             Each element in the array is a saccade described in the format
-            [scsh, scsv, sceh, scev, scdur, sctime], where:
+            [scsh, scsv, sceh, scev, scdur, sctime, scmag, scdir], where:
             - scsh : position of starting POG on horizontal axis.
             - scsv : position of starting POG on vertical axis.
             - sceh : position of ending POG on horizontal axis.
             - scev : position of ending POG on vertical axis.
             - scdur : duration in seconds of saccade.
             - sctime : starting time in seconds since the start of the session. 
+            - scmag: saccades magnitude in pixels
+            - scdir: saccades angle in degree.
         """
         fxend = (fixations[:, 2] + fixations[:, 3]).reshape(-1,1)
         time_diff = (fixations[1:, 3] - fxend[:-1, 0]).reshape(-1,1)

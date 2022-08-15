@@ -25,7 +25,7 @@ def _detect_by_gazepoint_filter(
     th_fxdur: tuple or list of shape (2,) 
         Fixation duration threshold
 
-    th_scdur: tuple or list of shape (2,)
+    th_scdur: tuple or list of shape (2,
         Saccade duration threshold
 
     th_bkdur: tuple or list of shape (2,)
@@ -52,6 +52,17 @@ def _detect_by_gazepoint_filter(
             - fxdur : duration in seconds of fixation.
             - fxtime : starting time in seconds since the start of the session. 
         """
+
+        # It normally takes 3 invalid samples in order to detect the start of 
+        # a new fixation. Hence the duration of the first sample of a fixation 
+        # is around 0.02002 to 0.2051 second (larger than the sampling rate which
+        # records a sample every 1/150Hz = 0.00667 second), as it includes the 
+        # previous 3 invalid samples.
+        #
+        # As I'm only interested sample marked as valid. The duration of the 
+        # fixation will need to recalculate the remove the duration of 3 invalid
+        # samples (i.e, not taking the FPOGD directly as the fixation duration).
+        
         fx_groups = df.groupby(by=['FPOGID'])
         # Should we ignore the first fixation (as it could be the remaining 
         # of the last fixation in the previous session)?
@@ -63,7 +74,8 @@ def _detect_by_gazepoint_filter(
 
             fxh = fpogs_valid['FPOGX'].mean()
             fxv = fpogs_valid['FPOGY'].mean()
-            fxdur = fpogs_valid['FPOGD'].values[-1]
+            fxdur = fpogs_valid['FPOGD'].values[-1] - \
+                    fpogs_valid['FPOGD'].values[0]
             fxtime = fpogs_valid['TIME'].values[0] - session_start_time
 
             # Checks

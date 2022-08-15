@@ -111,16 +111,17 @@ def _detect_by_gazepoint_filter(
         time_diff = (fixations[1:, 3] - fxend[:-1, 0]).reshape(-1,1)
         sxy = fixations[:-1, :2]    
         exy = fixations[1:, :2] 
-        sxmag = np.linalg.norm(exy*scrsz - sxy*scrsz, axis=1).reshape(-1,1)
+        scmag = np.linalg.norm(exy*scrsz - sxy*scrsz, axis=1).reshape(-1,1)
+        np.nan_to_num(scmag, posinf=0)
         rad_angles = -np.arctan2(*(exy*scrsz - sxy*scrsz).T[::-1])
-        sxdir = ((rad_angles * 180/np.pi + 360) % 360).reshape(-1,1)
+        scdir = ((rad_angles * 180/np.pi + 360) % 360).reshape(-1,1)
         saccades = np.concatenate([
                 sxy, 
                 exy,
                 time_diff,
                 fxend[:-1],
-                sxmag,
-                sxdir,
+                scmag,
+                scdir,
             ], axis=1)
          
         return saccades
@@ -190,12 +191,13 @@ def detect(df, screen_size, method='gazepoint'):
 
     
 if __name__ == "__main__":
-    # df_data = pd.read_csv('/mnt/DATA/ltkhiem/rcir/dataset/0000/fixed_et/tracker_data_log_0.tsv', delimiter = '\t')
-    df_data = pd.read_csv('temp/aaaa.csv')
-    np.set_printoptions(suppress=True)
-    f, s, b = detect(df_data, [1920, 1080]) 
-    print("fixations")
-    print(f)
-    print("saccades")
-    print(s)
+    df_data = pd.read_csv('/mnt/DATA/ltkhiem/rcir/dataset/0008/fixed_et/tracker_data_log_1.tsv', delimiter = '\t')
+    # df_data = pd.read_csv('temp/aaaa.csv')
+    (df_data.loc[201276:210406].FPOGID)
+    # np.set_printoptions(suppress=True)
+    # f, s, b = detect(df_data, [1920, 1080]) 
+    # print("fixations")
+    # print(f)
+    # print("saccades")
+    # print(s)
     

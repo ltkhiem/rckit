@@ -102,9 +102,10 @@ def generate(fx, sc, bk):
     feats = {
         "nfx": nfx,
         "nbk": nbk,
-        "fxdur": fx[:, 3],
+        "fxdur": fx[:, 2],
         "scdur": sc[:, 4],
         "bkdur": bk[:, 0],
+        "scdir": sc[:, 7],
         "dist": dist,
         "dist_h": dist_h,
         "dist_v": dist_v,

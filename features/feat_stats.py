@@ -49,6 +49,7 @@ def get_stats(data, extractor='all', feat_bins=None):
 def _get_histbins(feats, subjects, nbins):
     feat_all_data = {}
 
+    # Aggregate features
     for sid, sbj in enumerate(subjects):
         for item in feats[sbj]:
             for k, v in item.items():
@@ -64,7 +65,17 @@ def _get_histbins(feats, subjects, nbins):
     for k, v in feat_all_data.items():
         if np.isinf(v).any():
             v = np.nan_to_num(v, posinf=0, copy=True)
-        _, feat_all_bins[k] = np.histogram(v, bins=nbins)
+        # Remove outliers to generate an accurate histogram
+        q1, q3 = np.percentile(v, [25, 75])
+        iqr = q3 - q1
+        lower_fence, upper_fence = q1 - 1.5*iqr, q3 + 1.5*iqr
+
+        # Filter outliers
+        keep_v, = np.where((v>lower_fence) & (v < upper_fence))
+        filter_v = np.array(v)[keep_v]
+
+        # Generate histogram
+        _, feat_all_bins[k] = np.histogram(filter_v, bins=nbins)
     return feat_all_bins
 
 

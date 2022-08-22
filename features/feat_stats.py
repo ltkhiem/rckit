@@ -79,7 +79,7 @@ def _get_histbins(feats, subjects, nbins):
     return feat_all_bins
 
 
-def generate(feats, extractor='all', feat_bins=None):
+def generate(feats, extractor='all', feat_bins=None, ignore_feats = None):
     """
     Generate simple statistics for distribution-like features (list of floats),
     while keeping the single-number features as it is.
@@ -99,8 +99,12 @@ def generate(feats, extractor='all', feat_bins=None):
     if extractor=='all' or extractor=='hist':
         assert feat_bins is not None, "'feat_bins' must be specified"
 
+    _chk_ft = ignore_feats is not None
+
     new_feats = {}
     for k, v in feats.items():
+        if _chk_ft and k in ignore_feats:
+            continue
         if type(v) == list or type(v) == np.ndarray:
             if type(v) == list:
                 v = np.array(v)
@@ -111,7 +115,7 @@ def generate(feats, extractor='all', feat_bins=None):
     return new_feats
 
 
-def bulk_generate(feats, extractor='all', dataset='ind', subjects=None, nbins = 15):
+def bulk_generate(feats, extractor='all', dataset='ind', subjects=None, nbins = 16, ignore_feats=None):
     """
     Buld generate statistics feature for all trails (of an individual subject or 
     an entire dataset).
@@ -156,7 +160,7 @@ def bulk_generate(feats, extractor='all', dataset='ind', subjects=None, nbins = 
     for sid, sbj in enumerate(subjects):
         stat_feats = []
         for item in feats[sbj]:
-            stat_feats.append(generate(item, extractor, feat_bins))
+            stat_feats.append(generate(item, extractor, feat_bins, ignore_feats))
         all_stat_feats[sbj] = stat_feats
 
     if dataset == 'ind':

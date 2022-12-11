@@ -1,6 +1,6 @@
 import numpy as np
 import pywt
-from detector.constants import OcularEventMask
+from rckit.detector.constants import OcularEventMask
 
 
 def _detect_by_wavelet_transform(

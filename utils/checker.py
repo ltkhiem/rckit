@@ -18,7 +18,7 @@ def inside_th(thresh, value):
     
     if thresh[0] is None:
         return value <= thresh[1]
-    elif threshold[1] is None: 
+    elif thresh[1] is None: 
         return value >= thresh[0]
     else:
         return thresh[0] <= value <= thresh[1]

@@ -1,3 +1,13 @@
+""" 
+This is a reproduction of the ocular movement detection using wavelet transform
+algorithm that was initially introduced in the paper:
+
+    Bulling, A., Ward, J. A., Gellersen, H., & Tröster, G. (2011). Eye movement
+    analysis for activity recognition using electrooculography. IEEE 
+    transactions on pattern analysis and machine intelligence, 33(4), 741–753. 
+    https://doi.org/10.1109/TPAMI.2010.86
+"""
+
 import numpy as np
 import pywt
 from rckit.detector.constants import OcularEventMask
@@ -25,7 +35,7 @@ def _detect_by_wavelet_transform(
 
     """
 
-    def _get_segments( condition, split=True):
+    def _get_segments(condition, split=True):
         d = np.diff(condition)
         idx, = d.nonzero()
 
@@ -51,14 +61,25 @@ def _detect_by_wavelet_transform(
         wl, freq = pywt.cwt(veog, wavelet='haar', scales=[20])
         wl = wl.flatten()
         condition_b = np.abs(wl) >= th_bm
+
+        # Obtain positions of segments that might contain a blink
+        # which exceeds the blink magnitude threshold.
         pstarts, pends = _get_segments(condition_b)
         sign = np.abs(wl[pstarts]) / wl[pstarts]
 
+        # Only the peaks that are positive are considered
         pstarts = np.r_[pstarts, 10000000]
         positive_peaks, = np.where(sign>0)
+
+        # Only picks blinks that fall into the given threshold
         gap_durations = pstarts[positive_peaks+1] - pends[positive_peaks]
         picks = positive_peaks[np.where(gap_durations <= th_bt)[0]]
 
+        # Gather the actual on-set and off-set of the blinks
+        # by gradually expanding the segments to capture the whole peak. 
+
+        # Note that the pstarts and pends are just parts of the peak which
+        # exceeded the threshold, not the peak itself.
         b_starts = []
         for x in pstarts[picks]:
             while x>0 and th_sm <= np.abs(wl[x]): x-=1;
@@ -78,6 +99,8 @@ def _detect_by_wavelet_transform(
         wl, freq = pywt.cwt(mono_eog, wavelet='haar', scales=[20])
         wl = wl.flatten()
         condition = (np.abs(wl) >= th_sm) & (ocular_mask == 0)
+
+        # Obtain positions of segments that might contain a saccade
         pstarts, pends = _get_segments(condition) 
         durations = pends - pstarts
         picks, = np.where((durations >= th_st_lower) & (durations <= th_st_upper))

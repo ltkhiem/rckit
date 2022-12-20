@@ -156,7 +156,7 @@ def _detect_by_wavelet_transform(
 
     if not mask_only:
         saccades = _get_segments(ocular_mask==OcularEventMask.Saccade, split=False)
-        return blinks, saccades, fixations, ocular_mask
+        return fixations, saccades, blinks, ocular_mask
     return ocular_mask
 
 #     def extract( signals, fs=1000):

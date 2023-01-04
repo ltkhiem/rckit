@@ -61,7 +61,8 @@ def _detect_by_gazepoint_filter(
         # fixation will need to recalculate the remove the duration of 3 invalid
         # samples (i.e, not taking the FPOGD directly as the fixation duration).
         
-        fx_groups = df.groupby(by=['FPOGID'])
+        # fx_groups = df.groupby(by=['FPOGID'])
+        fx_groups = df.groupby(by='FPOGID')
         # Should we ignore the first fixation (as it could be the remaining 
         # of the last fixation in the previous session)?
         fixations = []
@@ -139,7 +140,7 @@ def _detect_by_gazepoint_filter(
             - bktime : starting time in seconds since the start of the session. 
         """
         blinks = []
-        bk_groups = df[df['BKID'] != 0].groupby(by=['BKID'])
+        bk_groups = df[df['BKID'] != 0].groupby(by='BKID')
         for bkid, bk in bk_groups:
             bktime = bk['TIME'].values[0] - session_start_time
             # Blink duration is calculated after the blink is over. Hence, 

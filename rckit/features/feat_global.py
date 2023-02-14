@@ -92,7 +92,7 @@ def _handle_null(fx, sc, bk):
     return fx, sc, bk
 
 
-def generate(fx, sc, bk):
+def generate(fx, sc, bk, norm_value:float=None):
     nfx, nbk = fx.shape[0], bk.shape[0]
     fx, sc, bk = _handle_null(fx, sc, bk)
     regr, nregr = get_regressions(sc)
@@ -116,6 +116,14 @@ def generate(fx, sc, bk):
         "nregr": nregr,
         "regr_rate": nregr/fx.shape[0],
     }
+
+    if norm_value is not None:
+        feats.update({
+            'nfx_norm': nfx/norm_value,
+            'nbk_norm': nbk/norm_value,
+            'nregr_norm': nregr/norm_value,
+        })
+            
     return feats 
 
 

@@ -118,11 +118,9 @@ def generate(fx, sc, bk, norm_value:float=None):
     }
 
     if norm_value is not None:
-        feats.update({
-            'nfx_norm': nfx/norm_value,
-            'nbk_norm': nbk/norm_value,
-            'nregr_norm': nregr/norm_value,
-        })
+        for x in ['nfx', 'nbk', 'nregr', 'scdur', 'bkdur', 'fxdur']:
+            val = feats.pop(x)
+            feats[f'{x}_norm'] = val / norm_value
             
     return feats 
 

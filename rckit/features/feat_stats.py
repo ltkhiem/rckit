@@ -30,17 +30,18 @@ def get_HIST(a, bins=10):
 
 
 def get_stats(data, extractor='all', feat_bins=None):
-    assert feat_bins is not None, "Feature bins must be specified"
     ret = {}
     if np.isinf(data).any():
         data = np.nan_to_num(data, posinf=0, copy=True)
 
     if extractor == 'all':
+        assert feat_bins is not None, "Feature bins must be specified"
         ret.update(get_BOF(data))
         ret.update(get_HIST(data, bins=feat_bins))
     elif extractor  == 'bof':
         ret.update(get_BOF(data))
     elif extractor == 'hist':
+        assert feat_bins is not None, "Feature bins must be specified"
         ret.update(get_HIST(data, bins=feat_bins))
 
     return ret
@@ -108,14 +109,24 @@ def generate(feats, extractor='all', feat_bins=None, ignore_feats = None):
         if type(v) == list or type(v) == np.ndarray:
             if type(v) == list:
                 v = np.array(v)
-            stats_feats = get_stats(v, extractor, feat_bins[k])
+            if extractor=='bof':
+                stats_feats = get_stats(v, extractor='bof')
+            else:
+                stats_feats = get_stats(v, extractor, feat_bins[k])
             new_feats.update({f'{k}_{_k}': _v for _k, _v in stats_feats.items()})
         else:
             new_feats.update({k:v})
     return new_feats
 
 
-def bulk_generate(feats, extractor='all', dataset='ind', subjects=None, nbins = 16, ignore_feats=None):
+def bulk_generate(feats, 
+                  extractor='all', 
+                  dataset='ind', 
+                  subjects=None, 
+                  nbins = 16, 
+                  hist_bins=None,
+                  ignore_feats=None,
+                  return_bins=False):
     """
     Buld generate statistics feature for all trails (of an individual subject or 
     an entire dataset).
@@ -139,6 +150,23 @@ def bulk_generate(feats, extractor='all', dataset='ind', subjects=None, nbins = 
     nbins: int
         Number of histogram bins to extract. Specify is extractor is set to 'all' 
         or 'hist'. Default is set to 15
+
+    hist_bins: dict
+        Dictionary of histogram bins. Must be specified if extractor is set to
+
+    ignore_feats: list of str
+        List of features to ignore. Default is None
+
+    return_bins: bool
+        If set to True, the histogram bins will be returned. Default is False
+
+    Returns
+    -------
+    new_feats: dict
+        Dictionary of features with statistics extracted
+
+    feat_bins: dict
+        Dictionary of histogram bins. Only returned if return_bins is set to True
     """
     if dataset == 'ind': 
         assert type(feats) == list, "'feats' must have type list"
@@ -152,7 +180,12 @@ def bulk_generate(feats, extractor='all', dataset='ind', subjects=None, nbins = 
     hist_names = [f'bin_{idx}' for idx in range(nbins+1)]
 
     if extractor=='all' or extractor=='hist':
-        feat_bins = _get_histbins(feats, subjects, nbins)
+        if hist_bins is not None:
+            feat_bins = hist_bins
+        else:
+            feat_bins = _get_histbins(feats, subjects, nbins)
+    else:
+        feat_bins = None
 
     new_feats = {}
     
@@ -164,7 +197,12 @@ def bulk_generate(feats, extractor='all', dataset='ind', subjects=None, nbins = 
         all_stat_feats[sbj] = stat_feats
 
     if dataset == 'ind':
-        return all_stat_feats['1234']
+        new_feats = all_stat_feats['1234']
     elif dataset == 'all':
-        return all_stat_feats
+        new_feats = all_stat_feats
+
+    if return_bins:
+        return new_feats, feat_bins
+    else:
+        return new_feats
 

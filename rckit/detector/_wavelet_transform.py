@@ -208,7 +208,6 @@ def _detect_by_wavelet_transform(
                 scmag,
                 scdir,
             ], axis=1)
-         
         return saccades
 
 
@@ -279,7 +278,7 @@ def _detect_by_wavelet_transform(
     fixations = _detect_fixations()
 
     if not mask_only:
-        saccades = _get_segments(ocular_mask==OcularEventMask.Saccade, split=False)
+        # saccades = _get_segments(ocular_mask==OcularEventMask.Saccade, split=False)
         return fixations, saccades, blinks, ocular_mask
     return ocular_mask
 
